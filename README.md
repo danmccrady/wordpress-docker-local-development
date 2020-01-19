@@ -1,4 +1,4 @@
-# wordpress-docker-local-dev
+# wordpress-docker-local-development
 Quickly spin up a wordpress site for local development.  This docker-compose file maps the themes & plugins folders to your local machine so that you can quickly edit them for development.  There is no need to install and setup WAMP or LAMP.  This is the quickest way to spin up a WordPress development environment. 
 
 ## Prerequisite
