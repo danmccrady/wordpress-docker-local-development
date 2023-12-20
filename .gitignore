@@ -23,3 +23,5 @@ node_modules/
 # add exception for these files
 !wp-content/plugins/.gitkeep
 !wp-content/themes/.gitkeep
+
+.DS_Store

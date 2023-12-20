@@ -16,9 +16,12 @@ services:
       WORDPRESS_DB_USER: wordpress_dev
       WORDPRESS_DB_PASSWORD: pa$$w0rd
       WORDPRESS_DEBUG: 1
+      WORDPRESS_DEBUG_DISPLAY: 1
+      WORDPRESS_DEBUG_LOG: 1
 
   db:
-    image: mysql:5.7
+    image: mysql:latest
+    command: mysqld --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
       - db_data:/var/lib/mysql
     restart: always
@@ -27,6 +30,8 @@ services:
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wordpress_dev
       MYSQL_PASSWORD: pa$$w0rd
+    ports:
+      - "3306:3306"  # Expose port 3306
 volumes:
   wordpress_files:
   db_data:
