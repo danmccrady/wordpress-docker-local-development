@@ -25,3 +25,8 @@ node_modules/
 !wp-content/themes/.gitkeep
 
 .DS_Store
+
+# local env (do not commit)
+.env
+.env.*
+!.env.example

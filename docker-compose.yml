@@ -1,38 +1,70 @@
-version: '3.3'
-
 services:
   wordpress:
+    image: ${WORDPRESS_IMAGE:-wordpress:php8.3-apache}
     depends_on:
-      - db
-    image: wordpress:latest
+      db:
+        condition: service_healthy
     volumes:
       - wordpress_files:/var/www/html
       - ./wp-content:/var/www/html/wp-content
     ports:
-      - "80:80"
-    restart: always
+      - "${WP_PORT:-8080}:80"
+    restart: unless-stopped
     environment:
-      WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: wordpress_dev
-      WORDPRESS_DB_PASSWORD: pa$$w0rd
-      WORDPRESS_DB_NAME: wordpress
-      WORDPRESS_DEBUG: 1
-      WORDPRESS_DEBUG_DISPLAY: 1
-      WORDPRESS_DEBUG_LOG: 1
+      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST:-db:3306}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-wordpress_dev}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress_dev_password}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-1}
 
   db:
-    image: mysql:8.0
-    command: '--default-authentication-plugin=mysql_native_password'
+    image: ${MYSQL_IMAGE:-mysql:8.4}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     volumes:
       - db_data:/var/lib/mysql
-    restart: always
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: football
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: wordpress_dev
-      MYSQL_PASSWORD: pa$$w0rd
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wordpress_root_password}
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME:-wordpress}
+      MYSQL_USER: ${WORDPRESS_DB_USER:-wordpress_dev}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress_dev_password}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD:-wordpress_root_password}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  wpcli:
+    image: ${WPCLI_IMAGE:-wordpress:cli-php8.3}
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    environment:
+      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST:-db:3306}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-wordpress_dev}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress_dev_password}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
+    working_dir: /var/www/html
+    volumes:
+      - wordpress_files:/var/www/html
+      - ./wp-content:/var/www/html/wp-content
+
+  phpmyadmin:
+    image: ${PHPMYADMIN_IMAGE:-phpmyadmin:5}
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
-      - "3306:3306"  # Expose port 3306
+      - "${PMA_PORT:-8081}:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+
 volumes:
   wordpress_files:
   db_data:

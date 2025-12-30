@@ -42,20 +42,25 @@ Before you begin, ensure you have Docker and Docker-compose installed on your ma
      cd wordpress-docker-local-development
      ```
 
-3. **Run the Setup Commands:**
-   - Set the necessary file permissions:
-     ```
-     sudo chmod -R 777 *
-     ```
-     (This command grants read, write, and execute permissions to all files in the directory.)
-   - Start the Docker containers:
-     ```
-     docker-compose up -d
-     ```
-     (This command runs your Docker containers in detached mode, allowing the terminal to be used for other commands while the containers run in the background.)
+3. **Create your local environment file:**
+    - Copy the example environment file:
+       ```
+       cp .env.example .env
+       ```
+    - Optionally edit `.env` to change ports, DB credentials, or image tags.
+
+4. **Start the containers:**
+    ```
+    docker compose up -d
+    ```
+    (This runs containers in detached mode.)
 
 4. **Access WordPress:**
-   Once the containers are up and running, access the WordPress setup wizard by navigating to `http://localhost` in your web browser.
+   Once the containers are up and running, access the WordPress setup wizard at:
+
+   - `http://localhost:8080` (default)
+
+   If you changed `WP_PORT` in `.env`, use that port instead.
 
 5. **Complete WordPress Setup:**
    Follow the on-screen instructions in the WordPress setup wizard to complete the installation.
@@ -63,12 +68,80 @@ Before you begin, ensure you have Docker and Docker-compose installed on your ma
 6. **Post-Setup Instructions:**
    - To stop the Docker containers, run:
      ```
-     docker-compose down
+       docker compose down
      ```
    - To view logs of your Docker containers, use:
      ```
-     docker-compose logs
+       docker compose logs
      ```
+
+## Common Commands
+
+- **Reset everything (including the database):**
+   ```
+   docker compose down -v
+   ```
+
+- **Run WP-CLI commands:**
+   ```
+   docker compose run --rm wpcli wp core version
+   docker compose run --rm wpcli wp plugin list
+   ```
+
+- **Start phpMyAdmin (optional):**
+   ```
+   docker compose --profile tools up -d
+   ```
+   Then open `http://localhost:8081` (default `PMA_PORT`).
+
+## Troubleshooting
+
+- **Port already in use** (common if you already run a web server locally):
+   - Change `WP_PORT` (and/or `PMA_PORT`) in `.env`, then restart:
+      ```
+      docker compose up -d
+      ```
+
+- **WordPress can’t connect to the database**:
+   - Check DB logs: `docker compose logs db`
+   - If you edited credentials, ensure the same values are in `.env` for:
+      - `WORDPRESS_DB_NAME`, `WORDPRESS_DB_USER`, `WORDPRESS_DB_PASSWORD`, `MYSQL_ROOT_PASSWORD`
+   - If you need a clean slate, reset volumes:
+      ```
+      docker compose down -v
+      docker compose up -d
+      ```
+
+- **File permission weirdness on macOS/Windows**:
+   - Avoid `chmod -R 777` (it can create security + ownership problems).
+   - If you hit write issues in `wp-content`, try restarting Docker Desktop and ensure the repo folder is shared in Docker Desktop settings.
+
+- **Apple Silicon (M1/M2/M3) image compatibility**:
+   - The default images used here support `arm64`. If you pinned an older tag and see platform errors, pick a newer tag or remove the pin.
+
+## Reproducibility (Pin Versions)
+
+By default this repo uses reasonable modern defaults, but you can make it fully reproducible by pinning image tags in `.env`.
+
+- In `.env`, set:
+   - `WORDPRESS_IMAGE=wordpress:php8.3-apache`
+   - `MYSQL_IMAGE=mysql:8.4`
+   - (Optional) `WPCLI_IMAGE=wordpress:cli-php8.3`
+
+## Optional: Use MariaDB Instead of MySQL
+
+If you prefer MariaDB for local dev, set the DB image in `.env`:
+
+```
+MYSQL_IMAGE=mariadb:11
+```
+
+Then recreate the DB container (and volumes if you want a clean DB):
+
+```
+docker compose down
+docker compose up -d
+```
 
 ## Working with Themes and Plugins
 
