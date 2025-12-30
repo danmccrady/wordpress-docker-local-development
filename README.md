@@ -119,6 +119,15 @@ Before you begin, ensure you have Docker and Docker-compose installed on your ma
 - **Apple Silicon (M1/M2/M3) image compatibility**:
    - The default images used here support `arm64`. If you pinned an older tag and see platform errors, pick a newer tag or remove the pin.
 
+- **phpMyAdmin shows `exec /docker-entrypoint.sh: exec format error` (Apple Silicon)**:
+   - This usually means you’re running an `amd64`-only phpMyAdmin image on an `arm64` Mac.
+   - Fix: ensure you’re using the `phpmyadmin:5` image (the Compose default) and you didn’t override `PHPMYADMIN_IMAGE` to `phpmyadmin/phpmyadmin`.
+   - Then recreate containers:
+      ```
+      docker compose down
+      docker compose --profile tools up -d
+      ```
+
 ## Reproducibility (Pin Versions)
 
 By default this repo uses reasonable modern defaults, but you can make it fully reproducible by pinning image tags in `.env`.
